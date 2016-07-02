@@ -1,45 +1,4 @@
-var servers = ["poligonserv1.gamenasia.net", "poligonserv1.gamenasia.net"];
-var canvasId = "canvas";
-var frameHref = "";
-var frameReferrer = "";
-var testMode = 1;
-
-VK.init(
-	function () {
-		//VK.addCallback('OnWindowBlur', function(settings) { u.getUnity().style.visibility = 'hiden'; });
-		//VK.addCallback('OnWindowFocus', function(settings) { u.getUnity().style.visibility = 'visible'; });
-		
-		VK.addCallback('onOrderSuccess', function (order_id) {
-			SendMessage("GameManager", "OnPurchase", 0);
-		});
-		VK.addCallback('onOrderFail', function () {
-			SendMessage("GameManager", "OnPurchase", 1);
-		});
-		VK.addCallback('onOrderCancel', function () {
-			SendMessage("GameManager", "OnPurchase", 2);
-		});
-
-		try {
-			var randomServer = servers[Math.floor(Math.random() * servers.length)];
-			frameHref = document.location.href + "&gameServers=" + randomServer;
-			frameReferrer = document.referrer;
-		} catch (err) {
-
-		}
-
-		/*document.onkeydown = function (evt) {
-			evt = evt || window.event;
-			if (evt.keyCode == 27) {
-				//alert('Esc key pressed.');
-				LoadFriends("online,photo_200_orig,sex,is_friend,can_send_friend_request", "", 1, 6);
-			}
-		};*/
-	},
-	function () {
-		// API initialization failed
-		//alert('VK API Loading Error!');
-	},
-'5.23');
+п»ї//alert("main: " + frameHref);
 
 function SetStorageItem(itemName, itemValue) {
     try {
@@ -78,33 +37,23 @@ function DeleteStorageItem(itemName) {
 
 function SyncFiles() { FS.syncfs(false, function (err) { }); }
 
+function GetBrowserInfo() {
+	SendMessage("GameManager", "GetBrowserInfo", browsers.join(',') + "|" + (isMobile ? "1" : "0"));
+}
+
 function GetParams() {
+	//alert("frameHref: " + frameHref);
+	//alert("frameReferrer: " + frameReferrer);
 	SendMessage("GameManager", "OnGetHrefString", frameHref);
 	SendMessage("GameManager", "OnGetReferrer", frameReferrer);
 }
 
+function CanUseHardwareCursor() {
+	SendMessage("GameManager", "CanUseHardwareCursor", (isEdge || isIE) ? "0" : "1");
+}
+
 function GetScrollParams() {
 	SendMessage("GameManager", "GetScrollParams", "0.1|5|0.135");
-}
-
-function GetDayAwards() {
-	SendMessage("GameManager", "GetDayAwards", "10|10|10|10|50");
-}
-
-function ShowPurchaseBox(itemName) {
-	var params = {
-		type: 'item',
-		item: itemName
-	};
-	VK.callMethod('showOrderBox', params);
-}
-
-function GetEnemyInfo(options, users, extraData) {
-	// { user_ids: "1,2" }
-	VK.api("users.get", { user_ids: users, fields: options, test_mode: testMode }, function (data) {
-		SendMessage("GameManager", "PrepareGetEnemyInfo", extraData);
-		SendMessage("GameManager", "GetEnemyInfo", JSON.stringify(data));
-	});
 }
 
 function OpenNewTab(url) {
@@ -113,16 +62,16 @@ function OpenNewTab(url) {
 		newwindow.focus();
 	} else {
 		//SendMessage("GameManager", "OpenUrlError", "");
-		OpenInNewTab1(url);
+		OpenUrl(url, '_blank');
 	}
 }
 
-function OpenInNewTab1(url) {
+function OpenUrl(url, windowType) {
 	var link = document.getElementById(canvasId);
 	var val = 1;
 	link.onmouseup = function () {
 		if (val == 1) {
-			var newwindow = window.open(url, '_blank');
+			var newwindow = window.open(url, windowType);
 			if (newwindow != null) {
 				newwindow.focus();
 			} else {
@@ -135,82 +84,97 @@ function OpenInNewTab1(url) {
 	}
 }
 
-function InviteInApp(users) {
-	VK.callMethod('showInviteBox');
-}
-
-function LoadFriends(options, userId, offset, count) {
-	count = 100;
-	//console.log("LoadFriends " + offset + " / " + count);
-
-	/*VK.api("friends.get", { user_id: userId, fields: options, offset: offset, count: count, test_mode: testMode }, function (data) {
-		if (data.response != null) {
-			if (data.response.items != null && data.response.items.length > 0) {
-				friends.response = data.response.items;
-				//setTimeout(function() { CheckInAppFriends(offset, count) }, 100);
-				CheckInAppFriends(offset, count);
-				return;
-			}
-		}
-	});*/
-
-	var code =
-	//'var friends=API.friends.get({"user_id":"'+userId+'","fields":"'+options+'","test_mode":"'+testMode+'"});'+
-	'var friends=API.friends.get({"user_id":"' + userId + '","test_mode":"' + testMode + '"}).items;' +
-	'var inAppFriends=API.friends.getAppUsers({"test_mode":"' + testMode + '"});' +
-	'var friendsLen = friends.length;' +
-	'var inAppLen = inAppFriends.length;' +
-	'var result=API.users.get({"user_ids":inAppFriends+friends,"fields":"' + options + '","test_mode":"' + testMode + '"});' +
-	'return {"result": result.slice(' + offset + ', ' + (offset + count) + '), "inAppLen": inAppLen};';
-
-	VK.api("execute", { code: code, test_mode: testMode }, function (data) {
-		var info = new Object();
-		info.response = data.response.result;
-		info.inAppLen = data.response.inAppLen;
-		info.offset = offset;
-		info.count = count;
-		//console.log(JSON.stringify(info));
-		SendMessage("GameManager", "GetFriendsInfo", JSON.stringify(info));
-	});
-}
-
-/*function CheckInAppFriends(offset, count) {
-	if (friends.response.length > 0) {
-		VK.api("friends.getAppUsers", { test_mode: testMode }, function (data) {
-			if (data.response != null && data.response.length > 0) {
-				var inAppFriend = data.response;
-				for (var i = 0; i < friends.response.length; i++) {
-					var user = friends.response[i];
-					var indx = inAppFriend.indexOf(user.id);
-					if (indx >= 0) {
-						user.inApp = 1;
-					} else {
-						user.inApp = 0;
-					}
-				}
-				//alert(JSON.stringify(friends));
-
-				friends.offset = offset;
-				friends.count = count;
-
-				//
-
-				SendMessage("GameManager", "GetFriendsInfo", JSON.stringify(friends));
-				
-				friends = null;
-				return;
-			}
-		});
-	}
-
-}*/
-
 function DebugAlert(err) {
 	alert(err);
 }
 
 function ShowError(err) {
 	alert(err);
+}
+
+function WrongBrowser() {
+	var imgLoaded = false;
+	var img = document.createElement("img");
+	var onLoad = function () {
+		if(imgLoaded){
+			return;
+		}
+		imgLoaded=true;
+		var w = document.documentElement.clientWidth, h = document.documentElement.clientHeight;
+		img.style.position = 'absolute';
+
+		var hOffset = (w / 2 - 650 / 2);
+		var top = (h - 180) / 2 + window.pageYOffset;
+		img.style.left = hOffset + 'px';
+		img.style.top = top + 'px';
+
+		var showInfo = function (text) {
+			var infoBlock = document.createElement('div');
+			var infoNode = document.createTextNode(text);
+			infoBlock.appendChild(infoNode);
+
+			infoBlock.style.color = "#222714";
+			infoBlock.style.textAlign = "center";
+			infoBlock.style.fontWeight = 'bold';
+			infoBlock.style.fontSize = "20px";
+			infoBlock.style.overflow = 'hidden';
+			//infoBlock.style.verticalAlign = 'middle';
+
+			infoBlock.style.position = img.style.position;
+			infoBlock.style.left = hOffset + 185 + 'px';
+			infoBlock.style.right = hOffset + 10 + 'px';
+			infoBlock.style.top = top + 50 + 'px';
+			infoBlock.style.bottom = top + 18 + 'px';
+
+			document.body.appendChild(infoBlock);
+		};
+		//alert("try text");
+		
+		var infoXhr = GetXMLHttpRequest('StreamingAssets/GameAssets/Locale/' + locale + '/wrongBrowser.txt', 1000);
+
+		/*infoXhr.onreadystatechange = function() {
+			if (infoXhr.readyState == 4) {
+				if(infoXhr.status == 200) {
+					alert(infoXhr.responseText);
+				}
+			}
+		};*/
+		infoXhr.onload = function (e) {
+			if (infoXhr.status != 200) {
+				showInfo("\"Internet Explorer\" does not support this WebGL content fully. Use a different browser to start this game.");
+			} else {
+				showInfo(infoXhr.response);
+			}
+		};
+		infoXhr.ontimeout = function (e) {
+			showInfo("\"Internet Explorer\" does not support this WebGL content fully. Use a different browser to start this game.");
+		};
+		infoXhr.send();
+		
+		//img.style.visibility = 'visible';
+	}
+
+	img.onload = onLoad;
+
+	img.setAttribute("src", 'StreamingAssets/wrongBrowser.jpg');
+	img.style.visibility = 'visible';
+
+	document.body.appendChild(img);
+	
+	//onLoad();
+	
+	/*try{
+		var cnv = document.getElementById("canvas");
+		cnv.parentElement.removeChild(cnv);
+		//document.removeChild(oldcanv)
+	}catch(e){
+		//alert(e);
+	}
+	
+	try{
+		this.progress.Clear();
+	}catch(e){}*/
+	
 }
 
 var onError = false;
@@ -220,6 +184,11 @@ function Errorhandler(err, url, line) {
 	}
 
 	onError = true;
+	
+	if(isIE){
+		WrongBrowser();
+		return true;
+	}
 
 	var img = document.createElement("img");
 
@@ -276,7 +245,7 @@ function Errorhandler(err, url, line) {
 		var titleXhr = GetXMLHttpRequest('StreamingAssets/GameAssets/Locale/' + locale + '/warningTitle.txt', 1000);
 		titleXhr.onload = function (e) {
 			if (titleXhr.status != 200) {
-				//alert( titleXhr.status + ': ' + titleXhr.statusText ); // пример вывода: 404: Not Found
+				//alert( titleXhr.status + ': ' + titleXhr.statusText ); // РїСЂРёРјРµСЂ РІС‹РІРѕРґР°: 404: Not Found
 				showTitle("Warning");
 			} else {
 				showTitle(titleXhr.response);
@@ -307,10 +276,12 @@ function Errorhandler(err, url, line) {
 	img.style.visibility = 'hidden';
 
 	document.body.appendChild(img);
+	
+	alert(err);
 
 	return true;
 }
 
 function Compatibilitycheck() {
-	
+	//WrongBrowser();
 }

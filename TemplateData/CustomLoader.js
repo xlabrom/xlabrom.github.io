@@ -11,6 +11,13 @@ function CustomLoader(dom) {
 	this.progress = 0.0;
     this.message = "";
     this.dom = dom;
+	this.bullets = null;
+	this.bullets1 = null;
+	var SetImagesPositions = null;
+	var Update = null;
+	var loadingImageCount = 0;
+	
+	//alert("onload before: " + this.dom + " / " + this.message + " / " + this.progress + " / " + loadingImageCount);
 
     var parent = dom.parentNode;
 
@@ -26,6 +33,22 @@ function CustomLoader(dom) {
 	background.style.height = dom.offsetHeight + 'px';
 
     var logoImage = document.createElement("img");
+	//alert("onload before0: " + loadingImageCount);
+	loadingImageCount++;
+	//alert("onload before1: " + loadingImageCount);
+	logoImage.onload = function (){
+		//alert("onload before2: " + loadingImageCount);
+		loadingImageCount--;
+		if(loadingImageCount<=0){
+			if(SetImagesPositions != null){
+				SetImagesPositions();
+			}
+			if(Update != null){
+				Update();
+			}
+		}
+		//alert("onload: " + loadingImageCount+" / "+SetImagesPositions);
+	};
     logoImage.src = "TemplateData/soldier.png";
     logoImage.style.position = "absolute";
     parent.appendChild(logoImage);
@@ -35,6 +58,18 @@ function CustomLoader(dom) {
 	logoImage.style.display = "inline";
 
     var companyImage = document.createElement("img");
+	loadingImageCount++;
+	companyImage.onload = function (){
+		loadingImageCount--;
+		if(loadingImageCount<=0){
+			if(SetImagesPositions != null){
+				SetImagesPositions();
+			}
+			if(Update != null){
+				Update();
+			}
+		}
+	};
     companyImage.src = "TemplateData/logo.png";
     companyImage.style.position = "absolute";
     parent.appendChild(companyImage);
@@ -46,13 +81,18 @@ function CustomLoader(dom) {
     var bullets = new Array(18);
     for (var i = 0; i < bullets.length; i++) {
         var bullet = document.createElement("img");
-		
-		/*if(i==0){
-			bullet.onload = function(){
-				alert( bullet.width+' / '+ bullet.clientWidth+' / '+this.width+' / '+ this.clientWidth  );
-			};
-		}*/
-		
+		loadingImageCount++;
+		bullet.onload = function (){
+			loadingImageCount--;
+			if(loadingImageCount<=0){
+				if(SetImagesPositions != null){
+					SetImagesPositions();
+				}
+				if(Update != null){
+					Update();
+				}
+			}
+		};
         bullet.src = "TemplateData/emptyBullet.png";
         bullet.style.position = "absolute";
         parent.appendChild(bullet);
@@ -66,6 +106,18 @@ function CustomLoader(dom) {
     var bullets1 = new Array(bullets.length);
     for (var i = 0; i < bullets.length; i++) {
         var bullet = document.createElement("img");
+		loadingImageCount++;
+		bullet.onload = function (){
+			loadingImageCount--;
+			if(loadingImageCount<=0){
+				if(SetImagesPositions != null){
+					SetImagesPositions();
+				}
+				if(Update != null){
+					Update();
+				}
+			}
+		};
         bullet.src = "TemplateData/fullBullet.png";
         bullet.style.position = "absolute";
         parent.appendChild(bullet);
@@ -124,22 +176,33 @@ function CustomLoader(dom) {
         }
     }
 	
-	var interval = this.interval = this.bullets[0].width + 5;
-	this.leftPos = dom.offsetLeft + (dom.offsetWidth * 0.5 - interval * bullets.length + logoImage.width);
-	this.topPos = dom.offsetTop + (dom.offsetHeight * 0.5 - logoImage.height * 0.5);
-	logoImage.style.top = this.topPos + 'px';
-	logoImage.style.left = this.leftPos + 'px';
+	SetImagesPositions = this.SetImagesPositions = function () {
+		if(this.bullets1 == null){
+			return;
+		}
+		this.interval = this.bullets[0].width + 5;
+		this.leftPos = dom.offsetLeft + (dom.offsetWidth * 0.5 - this.interval * bullets.length + logoImage.width);
+		this.topPos = dom.offsetTop + (dom.offsetHeight * 0.5 - logoImage.height * 0.5);
+		logoImage.style.top = this.topPos + 'px';
+		logoImage.style.left = this.leftPos + 'px';
 
-	this.leftPos += logoImage.width - 25;
-	this.topPos += logoImage.height * 0.5 - this.bullets[0].height * 0.5;
+		this.leftPos += logoImage.width - 25;
+		this.topPos += logoImage.height * 0.5 - this.bullets[0].height * 0.5;
+		
+		companyImage.style.top = this.topPos + this.bullets[0].height + 5 + 'px';
+		companyImage.style.left = this.leftPos + this.interval * bullets.length - companyImage.width - 5 + 'px';
+		
+		this.messageArea.style.top = this.topPos + this.bullets[0].height + 25 + 'px';
+	}
 	
-	companyImage.style.top = this.topPos + this.bullets[0].height + 5 + 'px';
-    companyImage.style.left = this.leftPos + interval * bullets.length - companyImage.width - 5 + 'px';
-	
-	this.messageArea.style.top = this.topPos + this.bullets[0].height + 25 + 'px';
+	this.SetImagesPositions();
 
-    this.Update = function () {
-        
+    Update = this.Update = function () {
+        if(this.bullets1 == null){
+			return;
+		}
+		
+		this.SetImagesPositions();
 
         for (var i = 0; i < bullets.length; i++) {
             var bullet = this.bullets[i];

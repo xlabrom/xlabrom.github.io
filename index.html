@@ -8,12 +8,14 @@
     <link rel="shortcut icon" href="TemplateData/favicon.ico" />
     <script src="TemplateData/CustomLoader.js"></script>
     <script src="TemplateData/UnityProgress.js"></script>
-    <script type="text/javascript" src="//vk.com/js/api/xd_connection.js?2"></script>
+	<script type="text/javascript" src="//vk.com/js/api/xd_connection.js?2"></script>
 	<script src="TemplateData/locale.js"></script>
-    <script src="TemplateData/main.js"></script>
+	<script src="TemplateData/vk_utils.js"></script>
+	<script src="TemplateData/main.js"></script>
 </head>
 <body class="template">
-    <p class="header"><span>Polygon</span></p>
+    
+	<p class="header"><span>Polygon</span></p>
     <div class="template-wrap clear">
         <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" height="720px" width="960px"></canvas>
         <!--<div class="fullscreen"><img src="TemplateData/fullscreen.png" width="38" height="38" alt="Fullscreen" title="Fullscreen" onclick="SetFullscreen(1);" /></div>-->
@@ -26,8 +28,8 @@
 
     <script type='text/javascript'>
   var Module = {
-    TOTAL_MEMORY: 134217728, // 134217728 268435456
-    errorhandler: null,			// arguments: err, url, line. This function must return 'true' if the error is handled, otherwise 'false'
+    TOTAL_MEMORY: 268435456, // 134217728 268435456 536870912
+    errorhandler: Errorhandler,			// arguments: err, url, line. This function must return 'true' if the error is handled, otherwise 'false'
     compatibilitycheck: Compatibilitycheck,
     dataUrl: "Release/polygon.data",
     codeUrl: "Release/polygon.js",
